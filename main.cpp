@@ -11,7 +11,7 @@ class Preprocessor {
 public:
     Preprocessor(string filePath, unsigned long colNum);
 
-    int getData(vector<vector<int>> &data);
+    int getData(vector<vector<unsigned>> &data);
 
 private:
     int parseLine(vector<unsigned> &parsed, const string &line, vector<unordered_map<string, unsigned>> &metElementSet,
@@ -21,7 +21,7 @@ private:
     unsigned long colNum;
 };
 
-int Preprocessor::getData(vector<vector<int>> &data) {
+int Preprocessor::getData(vector<vector<unsigned>> &data) {
     ifstream dataFile(filePath);
     string line;
     vector<unordered_map<string, unsigned>> metElementSet(colNum, unordered_map<string, unsigned>());
@@ -30,11 +30,16 @@ int Preprocessor::getData(vector<vector<int>> &data) {
     if (dataFile.is_open()) {
         int rowCount = 0;
         while (getline(dataFile, line)) {
+            rowCount++;
             parseLine(parsed, line, metElementSet, maxIndex);
+
+//            // ===== DEBUG ======
 //            for (int j = 0; j < colNum; j++) {
 //                cout << parsed[j] << " ";
 //            }
 //            cout << endl;
+//            // ==== DEBUGEND ====
+            data.push_back(parsed);
         }
         cout << "finished" << endl;
         dataFile.close();
@@ -52,12 +57,15 @@ int Preprocessor::parseLine(vector<unsigned> &parsed, const string &line,
     unsigned pos = 0;
     unsigned len = line.length();
     string elem;
+
     for (int i = 0; i < colNum - 1; i++) {
         while (line[pos] != ',' || (pos + 1 < len && line[pos + 1] == ' ')) {
             pos++;
         }
+
         elem = line.substr(lastPos, pos - lastPos);
-        lastPos = pos + 1;
+        pos++;
+        lastPos = pos;
         auto got = metElementSet[i].find(elem);
         if (got == metElementSet[i].end()) {
             maxIndex[i]++;
@@ -68,7 +76,6 @@ int Preprocessor::parseLine(vector<unsigned> &parsed, const string &line,
         }
     }
     elem = line.substr(lastPos, len - lastPos);
-    lastPos = pos + 1;
     auto got = metElementSet[colNum - 1].find(elem);
     if (got == metElementSet[colNum - 1].end()) {
         maxIndex[colNum - 1]++;
@@ -87,15 +94,24 @@ Preprocessor::Preprocessor(string filePath, unsigned long colNum) : filePath(std
 int main() {
     unsigned long rowNum = 150000; // estimated number of row
     unsigned long colNum = 15; // [exact] number of column
-    string filePath = "/Users/aglax/Desktop/test_data.txt";
-    vector<vector<int>> data;
+    string filePath = "/Users/aglax/Desktop/data.txt";
+    vector<vector<unsigned>> data;
     data.reserve(rowNum);
     Preprocessor prep(filePath, colNum);
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     prep.getData(data);
     std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() <<std::endl;
-    
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9 <<std::endl;
+
+//    // ===== DEBUG ======
+//    for(auto row: data) {
+//        for(auto elem: row) {
+//            cout << elem << " ";
+//        }
+//        cout << endl;
+//    }
+//    // ==== DEBUGEND ====
+
     return 0;
 }
