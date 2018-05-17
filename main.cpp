@@ -1,108 +1,35 @@
-#include <iostream>
-#include <utility>
-#include <vector>
-#include <string>
-#include <fstream>
-#include <unordered_map>
-
+#include <bitset>
+#include "Preprocessor.h"
+#include "constants.h"
+#include "tane.h"
 using namespace std;
 
-class Preprocessor {
-public:
-    Preprocessor(string filePath, unsigned long colNum);
 
-    int getData(vector<vector<unsigned>> &data);
 
-private:
-    int parseLine(vector<unsigned> &parsed, const string &line, vector<unordered_map<string, unsigned>> &metElementSet,
-                  vector<unsigned> &maxIndex);
+void prune() {
 
-    string filePath; // path to data file
-    unsigned long colNum;
-};
-
-int Preprocessor::getData(vector<vector<unsigned>> &data) {
-    ifstream dataFile(filePath);
-    string line;
-    vector<unordered_map<string, unsigned>> metElementSet(colNum, unordered_map<string, unsigned>());
-    vector<unsigned> maxIndex(colNum, 0);
-    vector<unsigned> parsed(colNum, 0);
-    if (dataFile.is_open()) {
-        int rowCount = 0;
-        while (getline(dataFile, line)) {
-            rowCount++;
-            parseLine(parsed, line, metElementSet, maxIndex);
-
-//            // ===== DEBUG ======
-//            for (int j = 0; j < colNum; j++) {
-//                cout << parsed[j] << " ";
-//            }
-//            cout << endl;
-//            // ==== DEBUGEND ====
-            data.push_back(parsed);
-        }
-        cout << "finished" << endl;
-        dataFile.close();
-        return rowCount;
-    }
-    return -1;
 }
 
-int Preprocessor::parseLine(vector<unsigned> &parsed, const string &line,
-                            vector<unordered_map<string, unsigned>> &metElementSet,
-                            vector<unsigned> &maxIndex) {
-    // split line by ","(a comma) but not by ", "(a comma and a space)
-    // and transform each element to an unsigned int.
-    unsigned lastPos = 0;
-    unsigned pos = 0;
-    unsigned len = line.length();
-    string elem;
+void generateNextLevel() {
 
-    for (int i = 0; i < colNum - 1; i++) {
-        while (line[pos] != ',' || (pos + 1 < len && line[pos + 1] == ' ')) {
-            pos++;
-        }
-
-        elem = line.substr(lastPos, pos - lastPos);
-        pos++;
-        lastPos = pos;
-        auto got = metElementSet[i].find(elem);
-        if (got == metElementSet[i].end()) {
-            maxIndex[i]++;
-            metElementSet[i].insert({elem, maxIndex[i]});
-            parsed[i] = maxIndex[i];
-        } else {
-            parsed[i] = got->second;
-        }
-    }
-    elem = line.substr(lastPos, len - lastPos);
-    auto got = metElementSet[colNum - 1].find(elem);
-    if (got == metElementSet[colNum - 1].end()) {
-        maxIndex[colNum - 1]++;
-        metElementSet[colNum - 1].insert({elem, maxIndex[colNum - 1]});
-        parsed[colNum - 1] = maxIndex[colNum - 1];
-    } else {
-        parsed[colNum - 1] = got->second;
-    }
-    return 0;
 }
 
-Preprocessor::Preprocessor(string filePath, unsigned long colNum) : filePath(std::move(filePath)), colNum(colNum) {
+void computeCPlus(unordered_map<unsigned, unsigned> lastCPlusSet) {
 
 }
 
 int main() {
-    unsigned long rowNum = 150000; // estimated number of row
+    unsigned long rowNum = 100000; // estimated number of row
     unsigned long colNum = 15; // [exact] number of column
     string filePath = "/Users/aglax/Desktop/data.txt";
     vector<vector<unsigned>> data;
     data.reserve(rowNum);
     Preprocessor prep(filePath, colNum);
 
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     prep.getData(data);
-    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9 <<std::endl;
+//    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+//    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9 <<std::endl;
 
 //    // ===== DEBUG ======
 //    for(auto row: data) {
@@ -113,5 +40,16 @@ int main() {
 //    }
 //    // ==== DEBUGEND ====
 
+    vector<unordered_map<Attrs, Attrs>> cPlusMaps(colNum+1);
+    vector<vector<Attrs>> Ls(colNum+1, vector<Attrs>());
+    vector<unordered_map<Attrs, vector<vector<unsigned>>>> partitionMaps;
+    Ls[0].push_back(Attrs(0));
+    cPlusMaps[0].insert({Ls[0][0], Attrs().set()});
+    partitionMaps.push_back(unordered_map<Attrs, vector<vector<unsigned>>>());
+    computeInitPartition(partitionMaps[0], data);
+    int level = 1;
+    while(Ls[level].size() > 0) {
+
+    }
     return 0;
 }
