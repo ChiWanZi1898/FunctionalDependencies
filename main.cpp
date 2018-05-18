@@ -2,34 +2,21 @@
 #include "Preprocessor.h"
 #include "constants.h"
 #include "tane.h"
+#include "StrippedProductCalculator.h"
+
 using namespace std;
-
-
-
-void prune() {
-
-}
-
-void generateNextLevel() {
-
-}
-
-void computeCPlus(unordered_map<unsigned, unsigned> lastCPlusSet) {
-
-}
 
 int main() {
     unsigned long rowNum = 100000; // estimated number of row
-    unsigned long colNum = 15; // [exact] number of column
+//    unsigned long colNum = 12; // [exact] number of column
     string filePath = "/Users/aglax/Desktop/data.txt";
     vector<vector<unsigned>> data;
-    data.reserve(rowNum);
-    Preprocessor prep(filePath, colNum);
+    data.reserve(MAX_COL_NUM);
+    Preprocessor prep(filePath, MAX_COL_NUM);
 
-//    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    prep.getData(data);
-//    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-//    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9 <<std::endl;
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    rowNum = prep.getData(data);
+
 
 //    // ===== DEBUG ======
 //    for(auto row: data) {
@@ -40,16 +27,32 @@ int main() {
 //    }
 //    // ==== DEBUGEND ====
 
-    vector<unordered_map<Attrs, Attrs>> cPlusMaps(colNum+1);
-    vector<vector<Attrs>> Ls(colNum+1, vector<Attrs>());
-    vector<unordered_map<Attrs, vector<vector<unsigned>>>> partitionMaps;
-    Ls[0].push_back(Attrs(0));
-    cPlusMaps[0].insert({Ls[0][0], Attrs().set()});
-    partitionMaps.push_back(unordered_map<Attrs, vector<vector<unsigned>>>());
-    computeInitPartition(partitionMaps[0], data);
-    int level = 1;
-    while(Ls[level].size() > 0) {
+    vector<unordered_map<Attrs, Attrs>> cPlusMaps(MAX_COL_NUM + 1);
+    vector<vector<Attrs>> Ls(MAX_COL_NUM + 1, vector<Attrs >());
+    vector<vector<vector<vector<unsigned>>>> partitionsList(MAX_COL_NUM + 1);
+    vector<vector<unsigned>> partitionTotalsList(MAX_COL_NUM + 1);
+    vector<vector<unsigned>> partitionCountsList(MAX_COL_NUM + 1);
+    vector<unordered_map<Attrs, unsigned>> attrPartitionMaps(MAX_COL_NUM + 1);
 
+    Ls[0].emplace_back(Attrs(0));
+    cPlusMaps[0].insert({Attrs(0), Attrs(0).set()});
+    prepareL1(Ls[1]);
+    computeInitPartition(partitionsList[1], partitionTotalsList[1], partitionCountsList[1], attrPartitionMaps[1], data);
+    partitionCountsList[0].push_back(0);
+    partitionTotalsList[0].push_back(rowNum);
+    attrPartitionMaps[0].insert({Attrs(0), 0});
+
+    StrippedProductCalculator cal(rowNum);
+    int level = 1;
+    while (level <= MAX_COL_NUM && Ls[level].size() > 0) {
+        computeDependencies(Ls[level], cPlusMaps[level - 1], cPlusMaps[level], partitionTotalsList,
+                            partitionCountsList, attrPartitionMaps);
+        prune(Ls[level], cPlusMaps[level]);
+        generateNextLevel(Ls, level, partitionsList, attrPartitionMaps, partitionTotalsList, partitionCountsList, cal);
+        level++;
     }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9 <<std::endl;
     return 0;
 }
