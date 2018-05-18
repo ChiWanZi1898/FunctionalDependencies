@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "tane.h"
 #include "StrippedProductCalculator.h"
+#include "ResultWriter.h"
 
 using namespace std;
 
@@ -10,6 +11,7 @@ int main() {
     unsigned long rowNum = 100000; // estimated number of row
 //    unsigned long colNum = 12; // [exact] number of column
     string filePath = "/Users/aglax/Desktop/data.txt";
+    string outputPath = "/Users/aglax/Desktop/result.txt";
     vector<vector<unsigned>> data;
     data.reserve(MAX_COL_NUM);
     Preprocessor prep(filePath, MAX_COL_NUM);
@@ -32,27 +34,35 @@ int main() {
     vector<vector<vector<vector<unsigned>>>> partitionsList(MAX_COL_NUM + 1);
     vector<vector<unsigned>> partitionTotalsList(MAX_COL_NUM + 1);
     vector<vector<unsigned>> partitionCountsList(MAX_COL_NUM + 1);
+    vector<vector<bool>> isKey(MAX_COL_NUM + 1);
     vector<unordered_map<Attrs, unsigned>> attrPartitionMaps(MAX_COL_NUM + 1);
 
     Ls[0].emplace_back(Attrs(0));
     cPlusMaps[0].insert({Attrs(0), Attrs(0).set()});
     prepareL1(Ls[1]);
-    computeInitPartition(partitionsList[1], partitionTotalsList[1], partitionCountsList[1], attrPartitionMaps[1], data);
+    computeInitPartition(partitionsList[1], partitionTotalsList[1], partitionCountsList[1], isKey[1],
+                         attrPartitionMaps[1], data);
     partitionCountsList[0].push_back(0);
     partitionTotalsList[0].push_back(rowNum);
     attrPartitionMaps[0].insert({Attrs(0), 0});
 
     StrippedProductCalculator cal(rowNum);
+    ResultWriter outWriter(outputPath);
+
     int level = 1;
     while (level <= MAX_COL_NUM && Ls[level].size() > 0) {
         computeDependencies(Ls[level], cPlusMaps[level - 1], cPlusMaps[level], partitionTotalsList,
-                            partitionCountsList, attrPartitionMaps);
-        prune(Ls[level], cPlusMaps[level]);
-        generateNextLevel(Ls, level, partitionsList, attrPartitionMaps, partitionTotalsList, partitionCountsList, cal);
+                            partitionCountsList, attrPartitionMaps, outWriter);
+        prune(Ls[level], cPlusMaps[level], isKey[level], outWriter);
+        generateNextLevel(Ls, level, partitionsList, attrPartitionMaps, partitionTotalsList, partitionCountsList, isKey,
+                          cal);
         level++;
     }
 
+    outWriter.write();
+
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9 <<std::endl;
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9
+              << std::endl;
     return 0;
 }

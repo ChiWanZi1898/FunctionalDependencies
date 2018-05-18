@@ -8,7 +8,8 @@
 void computeDependencies(vector<Attrs > &L, unordered_map<Attrs, Attrs > &lastCPlus,
                          unordered_map<Attrs, Attrs > &currCPlus, const vector<vector<unsigned>> &partitionTotalsList,
                          const vector<vector<unsigned>> &partitionCountsList,
-                         const vector<unordered_map<Attrs, unsigned>> &attrPartitionMaps) {
+                         const vector<unordered_map<Attrs, unsigned>> &attrPartitionMaps,
+                         ResultWriter& outWriter) {
     for (auto &x : L) {
         Attrs newC;
         newC.set();
@@ -32,12 +33,13 @@ void computeDependencies(vector<Attrs > &L, unordered_map<Attrs, Attrs > &lastCP
                 Attrs tmp = x;
                 tmp.reset(i);
                 if (validDependency(partitionTotalsList, partitionCountsList, attrPartitionMaps, tmp, x)) {
-                    for (int j = 0; j < MAX_COL_NUM; j++)
-                        if (tmp[j]) {
-
-                            cout << j + 1 << " ";
-                        }
-                    cout << "-> " << i + 1 << endl;
+//                    for (int j = 0; j < MAX_COL_NUM; j++)
+//                        if (tmp[j]) {
+//
+//                            cout << j + 1 << " ";
+//                        }
+//                    cout << "-> " << i + 1 << endl;
+                    outWriter.add(tmp, i);
                     got->second.reset(i);
                     got->second &= x;
                 }
@@ -49,6 +51,7 @@ void computeDependencies(vector<Attrs > &L, unordered_map<Attrs, Attrs > &lastCP
 void computeInitPartition(vector<vector<vector<unsigned>>> &partitions,
                           vector<unsigned> &partitionTotals,
                           vector<unsigned> &partitionCounts,
+                          vector<bool> &isKey,
                           unordered_map<Attrs, unsigned> &attrPartitionMap,
                           const vector<vector<unsigned>> &data) {
     unsigned rowNum = data.size();
@@ -81,6 +84,10 @@ void computeInitPartition(vector<vector<vector<unsigned>>> &partitions,
         }
         partitionCounts.push_back(partitions[i].size());
         partitionTotals.push_back(count);
+        if(count)
+            isKey.push_back(false);
+        else
+            isKey.push_back(true);
     }
     for (unsigned i = 0; i < MAX_COL_NUM; i++) {
         bitset<MAX_COL_NUM> attr(0);
@@ -132,6 +139,7 @@ void generateNextLevel(vector<vector<Attrs>> &Ls,
                        vector<unordered_map<Attrs, unsigned>> &attrPartitionMaps,
                        vector<vector<unsigned>> &partitionTotalsList,
                        vector<vector<unsigned>> &partitionCountsList,
+                       vector<vector<bool>> &isKey,
                        StrippedProductCalculator &cal) {
     vector<vector<Attrs>> prefixBlocks;
     computePrefixBlocks(Ls[level], prefixBlocks);
@@ -168,6 +176,10 @@ void generateNextLevel(vector<vector<Attrs>> &Ls,
                             partitionsList[level + 1][index]);
                     partitionTotalsList[level + 1].push_back(total);
                     partitionCountsList[level + 1].push_back(partitionsList[level + 1][index].size());
+                    if(total)
+                        isKey[level+1].push_back(false);
+                    else
+                        isKey[level+1].push_back(true);
                 }
             }
         }
@@ -190,19 +202,57 @@ bool validDependency(const vector<vector<unsigned>> &partitionTotalsList,
         return false;
 }
 
-void prune(vector<Attrs > &L, unordered_map<Attrs, Attrs > &CPlus) {
+void prune(vector<Attrs > &L, unordered_map<Attrs, Attrs > &CPlus, vector<bool>& isKey, ResultWriter& outWriter) {
     int idx = 0;
     while (!L.empty() && idx < L.size()) {
         auto got = CPlus.find(L[idx]);
         if (got->second.none()) {
-            quickDelete(idx, L);
+            quickDelete<Attrs>(idx, L);
+            quickDelete<bool>(idx, isKey);
+            continue;
         } else {
             idx++;
+        }
+        if(isKey[idx]) {
+            Attrs a = got->second ^ (got->second & L[idx]);
+            for(int i = 0; i < MAX_COL_NUM; i++) {
+                if(a[i]) {
+                    Attrs comb;
+                    Attrs xxx = L[idx];
+                    comb.set();
+
+                    for(int j = 0; j < MAX_COL_NUM; j++) {
+                        if(L[idx][j]) {
+                            Attrs tmp = L[idx];
+                            tmp.set(i);
+                            tmp.reset(j);
+                            auto got2 = CPlus.find(tmp);
+                            if(got2 == CPlus.end()) {
+                                comb.reset();
+                                break;
+                            }
+                            comb &= got2->second;
+
+                        }
+                    }
+                    if(comb[i]) {
+                        outWriter.add(L[idx], i);
+//                        for (int j = 0; j < MAX_COL_NUM; j++)
+//                            if (L[idx][j]) {
+//                                cout << j + 1 << " ";
+//                            }
+//                        cout << "-> " << i + 1 << endl;
+                    }
+                }
+            }
+            quickDelete<Attrs>(idx, L);
+            quickDelete<bool>(idx, isKey);
         }
     }
 }
 
-void quickDelete(int idx, vector<Attrs > &vec) {
+template<typename T>
+void quickDelete(int idx, vector<T> &vec) {
     vec[idx] = vec.back();
     vec.pop_back();
 }
