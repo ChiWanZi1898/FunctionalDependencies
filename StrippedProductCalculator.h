@@ -15,11 +15,12 @@ class StrippedProductCalculator {
 public:
     StrippedProductCalculator(unsigned rowNum);
     unsigned strippedProduct(const vector<vector<unsigned>> &p1,
-                         const vector<vector<unsigned>> &p2,
-                         vector<vector<unsigned>> &p);
+                             const vector<vector<unsigned>> &p2,
+                             vector<vector<unsigned>> &p);
 private:
     unsigned rowNum;
     vector<int> T;
+    vector<vector<unsigned>> S;
 };
 
 

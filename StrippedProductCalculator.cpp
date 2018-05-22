@@ -4,7 +4,7 @@
 
 #include "StrippedProductCalculator.h"
 
-StrippedProductCalculator::StrippedProductCalculator(unsigned rowNum) : rowNum(rowNum), T(rowNum + 1, -1) {
+StrippedProductCalculator::StrippedProductCalculator(unsigned rowNum) : rowNum(rowNum), T(rowNum + 1, -1), S(20000) {
 }
 
 unsigned
@@ -12,14 +12,13 @@ StrippedProductCalculator::strippedProduct(const vector<vector<unsigned>> &p1, c
                                            vector<vector<unsigned>> &p) {
     p.clear();
     unsigned count = 0;
-    unsigned xxx = 0;
-    int y;
-    vector<vector<unsigned>> S(p1.size());
+
+    p.resize(30, vector<unsigned>());
+    unsigned index = 0;
+//    p.reserve(200);
     for (unsigned i = 0; i < p1.size(); i++) {
         for (unsigned j = 0; j < p1[i].size(); j++) {
             T[p1[i][j]] = i;
-            y = p1[i][j];
-            xxx++;
         }
     }
     for (unsigned i = 0; i < p2.size(); i++) {
@@ -33,8 +32,11 @@ StrippedProductCalculator::strippedProduct(const vector<vector<unsigned>> &p1, c
             if (T[p2[i][j]] != -1) {
                 if (S[T[p2[i][j]]].size() >= 2) {
                     count += S[T[p2[i][j]]].size();
-                    p.push_back(S[T[p2[i][j]]]);
-
+                    if(index < 30)
+                        p[index] =S[T[p2[i][j]]];
+                    else
+                        p.push_back(S[T[p2[i][j]]]);
+                    index++;
                 }
                 S[T[p2[i][j]]].clear();
             }
@@ -45,5 +47,6 @@ StrippedProductCalculator::strippedProduct(const vector<vector<unsigned>> &p1, c
             T[p1[i][j]] = -1;
         }
     }
+    p.resize(index);
     return count;
 }

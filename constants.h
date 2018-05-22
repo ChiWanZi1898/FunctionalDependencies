@@ -5,7 +5,7 @@
 #ifndef FD_CONSTANTS_H
 #define FD_CONSTANTS_H
 
-#define MAX_COL_NUM 15
+#define MAX_COL_NUM 12
 
 #define Attrs bitset<MAX_COL_NUM>
 

@@ -9,7 +9,7 @@ void computeDependencies(vector<Attrs > &L, unordered_map<Attrs, Attrs > &lastCP
                          unordered_map<Attrs, Attrs > &currCPlus, const vector<vector<unsigned>> &partitionTotalsList,
                          const vector<vector<unsigned>> &partitionCountsList,
                          const vector<unordered_map<Attrs, unsigned>> &attrPartitionMaps,
-                         ResultWriter& outWriter) {
+                         ResultWriter &outWriter) {
     for (auto &x : L) {
         Attrs newC;
         newC.set();
@@ -84,7 +84,7 @@ void computeInitPartition(vector<vector<vector<unsigned>>> &partitions,
         }
         partitionCounts.push_back(partitions[i].size());
         partitionTotals.push_back(count);
-        if(count)
+        if (count)
             isKey.push_back(false);
         else
             isKey.push_back(true);
@@ -176,10 +176,10 @@ void generateNextLevel(vector<vector<Attrs>> &Ls,
                             partitionsList[level + 1][index]);
                     partitionTotalsList[level + 1].push_back(total);
                     partitionCountsList[level + 1].push_back(partitionsList[level + 1][index].size());
-                    if(total)
-                        isKey[level+1].push_back(false);
+                    if (total)
+                        isKey[level + 1].push_back(false);
                     else
-                        isKey[level+1].push_back(true);
+                        isKey[level + 1].push_back(true);
                 }
             }
         }
@@ -202,52 +202,52 @@ bool validDependency(const vector<vector<unsigned>> &partitionTotalsList,
         return false;
 }
 
-void prune(vector<Attrs > &L, unordered_map<Attrs, Attrs > &CPlus, vector<bool>& isKey, ResultWriter& outWriter) {
+void prune(vector<Attrs > &L, unordered_map<Attrs, Attrs > &CPlus, vector<bool> &isKey, ResultWriter &outWriter) {
     int idx = 0;
     while (!L.empty() && idx < L.size()) {
         auto got = CPlus.find(L[idx]);
         if (got->second.none()) {
-            quickDelete<Attrs>(idx, L);
+            quickDelete<Attrs >(idx, L);
             quickDelete<bool>(idx, isKey);
             continue;
         } else {
             idx++;
         }
-        if(isKey[idx]) {
-            Attrs a = got->second ^ (got->second & L[idx]);
-            for(int i = 0; i < MAX_COL_NUM; i++) {
-                if(a[i]) {
-                    Attrs comb;
-                    Attrs xxx = L[idx];
-                    comb.set();
-
-                    for(int j = 0; j < MAX_COL_NUM; j++) {
-                        if(L[idx][j]) {
-                            Attrs tmp = L[idx];
-                            tmp.set(i);
-                            tmp.reset(j);
-                            auto got2 = CPlus.find(tmp);
-                            if(got2 == CPlus.end()) {
-                                comb.reset();
-                                break;
-                            }
-                            comb &= got2->second;
-
-                        }
-                    }
-                    if(comb[i]) {
-                        outWriter.add(L[idx], i);
-//                        for (int j = 0; j < MAX_COL_NUM; j++)
-//                            if (L[idx][j]) {
-//                                cout << j + 1 << " ";
+//        if(isKey[idx]) {
+//            Attrs a = got->second ^ (got->second & L[idx]);
+//            for(int i = 0; i < MAX_COL_NUM; i++) {
+//                if(a[i]) {
+//                    Attrs comb;
+//                    Attrs xxx = L[idx];
+//                    comb.set();
+//
+//                    for(int j = 0; j < MAX_COL_NUM; j++) {
+//                        if(L[idx][j]) {
+//                            Attrs tmp = L[idx];
+//                            tmp.set(i);
+//                            tmp.reset(j);
+//                            auto got2 = CPlus.find(tmp);
+//                            if(got2 == CPlus.end()) {
+//                                comb.reset();
+//                                break;
 //                            }
-//                        cout << "-> " << i + 1 << endl;
-                    }
-                }
-            }
-            quickDelete<Attrs>(idx, L);
-            quickDelete<bool>(idx, isKey);
-        }
+//                            comb &= got2->second;
+//
+//                        }
+//                    }
+//                    if(comb[i]) {
+//                        outWriter.add(L[idx], i);
+////                        for (int j = 0; j < MAX_COL_NUM; j++)
+////                            if (L[idx][j]) {
+////                                cout << j + 1 << " ";
+////                            }
+////                        cout << "-> " << i + 1 << endl;
+//                    }
+//                }
+//            }
+//            quickDelete<Attrs>(idx, L);
+//            quickDelete<bool>(idx, isKey);
+//        }
     }
 }
 

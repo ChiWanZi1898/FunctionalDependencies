@@ -10,7 +10,7 @@ using namespace std;
 int main() {
     unsigned long rowNum = 100000; // estimated number of row
 //    unsigned long colNum = 12; // [exact] number of column
-    string filePath = "/Users/aglax/Desktop/data.txt";
+    string filePath = "/Users/aglax/Desktop/test_data.txt";
     string outputPath = "/Users/aglax/Desktop/result.txt";
     vector<vector<unsigned>> data;
     data.reserve(MAX_COL_NUM);
