@@ -4,6 +4,7 @@
 
 #ifndef FD_CONSTANTS_H
 #define FD_CONSTANTS_H
+#include <bitset>
 
 #define MAX_COL_NUM 15
 
