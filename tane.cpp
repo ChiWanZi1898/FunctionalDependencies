@@ -171,6 +171,8 @@ void generateNextLevel(vector<vector<Attrs>> &Ls,
                     }
 
                     unsigned total = cal.strippedProduct(
+                            prefixBlock[i],
+                            prefixBlock[j],
                             partitionsList[level][attrPartitionMaps[level].find(prefixBlock[i])->second],
                             partitionsList[level][attrPartitionMaps[level].find(prefixBlock[j])->second],
                             partitionsList[level + 1][index]);
