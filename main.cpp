@@ -10,8 +10,16 @@ using namespace std;
 int main() {
     unsigned long rowNum = 100000; // estimated number of row
 //    unsigned long colNum = 12; // [exact] number of column
-    string filePath = "/Users/aglax/Desktop/data.txt";
-    string outputPath = "/Users/aglax/Desktop/result.txt";
+    string filePath;
+    cout << "Please insert data path: " << endl;
+    cin >> filePath;
+//    if (filePath.length() == 0)
+//        filePath = "/Users/aglax/Desktop/data.txt";
+    string outputPath;
+    cout << "Please insert result path: " << endl;
+    cin >> outputPath;
+//    if (outputPath.length() == 0)
+//        outputPath = "/Users/aglax/Desktop/result.txt";
     vector<vector<unsigned>> data;
     data.reserve(MAX_COL_NUM);
     Preprocessor prep(filePath, MAX_COL_NUM);
@@ -62,7 +70,7 @@ int main() {
     outWriter.write();
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9
+    std::cout << "Time consumption = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1e9
               << std::endl;
     return 0;
 }
